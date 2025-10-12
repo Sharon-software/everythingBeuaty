@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
-from .models import Salon, Booking
+from .models import Salon, Booking, Services
 from .serializers import SalonSerializer, BookingSerializer
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -89,10 +89,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     
     def perform_create(self, serializer):
-        serializer.save(
-            customer_name=self.request.user.get_full_name() or self.request.user.username,
-            customer_email=self.request.user.email
-        )
+      serializer.save()
 
    
     def update(self, request, *args, **kwargs):
@@ -110,7 +107,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                     send_mail(
                         subject="Booking Confirmed",
                         message=(
-                            f"Your booking at {booking.salon.salon_name.upper()} for {booking.service_name.upper()} "
+                            f"Your booking at {booking.salon.salon_name.upper()} for {booking.service_name.service_name.upper()} "
                             f"has been approved.\n"
                             f"For further communication, please contact the owner directly at {booking.salon.owner.email}."
                         ),
@@ -166,27 +163,36 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             if service_name or date_time:
                 if service_name:
-                    booking.service_name = service_name
+                    try:
+                        service = Services.objects.get(salon=booking.salon, service_name=service_name)
+                    except Services.DoesNotExist:
+                        return Response(
+                            {"service_name": "Service not found for this salon."},
+                            status=400
+                        )
+                    booking.service_name = service  
+
                 if date_time:
                     booking.date_time = date_time
 
-                booking.status = 'pending' #reset
+                booking.status = 'pending'  
                 booking.save()
+
                 return Response(
                     {"detail": "Booking updated and awaiting re-approval."},
                     status=status.HTTP_200_OK
-                )
+                )    
 
             return Response(
                 {"detail": "No valid updates provided."},
                 status=status.HTTP_400_BAD_REQUEST
-            )
+                )
 
        
         return Response(
-            {"detail": "You are not authorized to modify this booking."},
-            status=status.HTTP_403_FORBIDDEN
-        )
+                {"detail": "You are not authorized to modify this booking."},
+                status=status.HTTP_403_FORBIDDEN
+                )
 
 
         

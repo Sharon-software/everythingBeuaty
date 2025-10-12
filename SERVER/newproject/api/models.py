@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 
 
+
 # Create your models here.
 ##class Register(models.Model):
    # firstname = models.CharField(max_length=100)
@@ -32,18 +33,6 @@ def __str__(self):
         return f"Image for {self.salon.salon_name}"
 
 
-class Booking(models.Model):
-    salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name="bookings")
-    service_name = models.CharField(max_length=100)
-    date_time = models.DateTimeField()
-    price = models.DecimalField(max_digits=8, decimal_places=2)
-    customer_name = models.CharField(max_length=100, blank=True)
-    customer_email = models.EmailField(blank=True)
-    
-
-    def __str__(self):
-        return f"{self.service_name} at {self.salon.salon_name} on {self.date_time}"
-
 class PendingUser(models.Model):
     first_name = models.CharField(max_length=100,default="")  ### ADDED
     last_name = models.CharField(max_length=100,default="") 
@@ -61,7 +50,7 @@ class UserProfile(models.Model):
     is_verified = models.BooleanField(default=False)
 
 class Services(models.Model):
-    salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='service_items')
+    salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='services_items')
     service_name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=8, decimal_places=2)
 
@@ -76,7 +65,7 @@ class Booking(models.Model):
     ]
 
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
-    service_name = models.CharField(max_length=100) 
+    service_name =  models.ForeignKey('Services', on_delete=models.CASCADE)
     date_time = models.DateTimeField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     customer_name = models.CharField(max_length=255)

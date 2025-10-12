@@ -28,9 +28,7 @@ class SalonSerializer(serializers.ModelSerializer):
 
     owner = serializers.ReadOnlyField(source='owner.email')
     services = serializers.CharField(write_only=True, required=True)
-    services_list = ServicesSerializer(source='services', many=True, read_only=True) 
-   
-
+    services_list = ServicesSerializer(source='services_items', many=True, read_only=True) 
     gallery = serializers.SerializerMethodField()
     gallery_upload = serializers.ListField(
         child=serializers.ImageField(), write_only=True, required=False
@@ -97,28 +95,38 @@ class SalonSerializer(serializers.ModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     salon_id = serializers.CharField(write_only=True) 
-    salon_name = serializers.CharField(source='salon.salon_name', read_only=True)  # read-only
+    salon_name = serializers.CharField(source='salon.salon_name', read_only=True)  
     customer_name = serializers.CharField(read_only=True)
     customer_email = serializers.CharField(read_only=True)
     status = serializers.CharField(read_only=True)
     service_name = serializers.CharField()
-
+    service_name_display = serializers.CharField(source='service_name.service_name', read_only=True)
+    
     class Meta:
         model = Booking
-        fields = ['id','salon_id','salon_name', 'service_name', 'date_time', 'price', 'customer_name', 'customer_email','status']
+        fields = ['id','salon_id','salon_name', 'service_name','service_name_display', 'date_time', 'price', 'customer_name', 'customer_email','status']
 
     def create(self, validated_data):
         request = self.context.get('request')
         user = request.user if request else None
         if not user or not user.is_authenticated:
             raise serializers.ValidationError("Authentication required to book.")
-
+        
+        service_name_str = validated_data.pop('service_name')
         salon_id = validated_data.pop('salon_id')
         try:
             salon = Salon.objects.get(id=salon_id)
         except Salon.DoesNotExist:
             raise serializers.ValidationError({'salon_id': 'Salon not found.'})
         
+        try:
+            service = Services.objects.get(salon=salon, service_name=service_name_str)
+        except Services.DoesNotExist:
+            raise serializers.ValidationError({'service_name': 'Service not found for this salon.'})
+
+        validated_data['salon'] = salon
+        validated_data['service_name'] = service
+
         if request and request.user.is_authenticated:
             validated_data['customer_name'] = request.user.get_full_name() or request.user.username
             validated_data['customer_email'] = request.user.email

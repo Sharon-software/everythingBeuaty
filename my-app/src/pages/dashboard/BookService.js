@@ -108,7 +108,7 @@ const BookService = () => {
               onChange={(e) => setSelectedService(e.target.value)}
             >
               <option value="">Choose service</option>
-              {selectedSalon.services_list.map((service, index) => (
+              {selectedSalon?.services_list?.map((service, index) => (
                 <option key={index} value={service.service_name}>
                   {service.service_name} - R{service.price}
                 </option>

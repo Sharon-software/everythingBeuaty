@@ -22,14 +22,14 @@ class Salon(models.Model):
     endT=models.CharField(max_length=100, default="17:00:00")
     
 
-def __str__(self):
-    return self.salon_name
+    def __str__(self):
+     return self.salon_name
 
 class GalleryImage(models.Model):
     salon = models.ForeignKey(Salon, related_name='gallery', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='salon_images/')
 
-def __str__(self):
+    def __str__(self):
         return f"Image for {self.salon.salon_name}"
 
 
@@ -64,8 +64,8 @@ class Booking(models.Model):
         ('declined', 'Declined'),
     ]
 
-    salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
-    service_name =  models.ForeignKey('Services', on_delete=models.CASCADE)
+    salon = models.ForeignKey('Salon', on_delete=models.CASCADE)
+    service =  models.ForeignKey('Services', on_delete=models.CASCADE)
     date_time = models.DateTimeField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     customer_name = models.CharField(max_length=255)

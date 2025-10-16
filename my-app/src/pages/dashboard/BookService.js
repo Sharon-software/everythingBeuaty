@@ -1,73 +1,52 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
 import axiosInstance from "../../Axiosinstance";
 
 const BookService = () => {
   const [showPicker, setShowPicker] = useState(false);
   const [dateTime, setDateTime] = useState("");
-  const [selectedService, setSelectedService] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const selectedSalon = location.state?.salon || null;
   const token = localStorage.getItem("accessToken");
 
   const handleConfirm = async () => {
-    if (!dateTime) {
-      alert("Please select  date and time!");
-      return;
-    }
+    if (!dateTime) 
+      return alert("Please select a date and time!");
+    if (!selectedServiceId) 
+      return alert("Please select a service!");
 
     const selected = new Date(dateTime);
     const now = new Date();
+    if (selected < now) return alert("Cannot choose a past date/time!");
 
-    if (selected < now) {
-      alert("Cannot choose a past date and time!");
-       
-      return;
-    }
-
-    // Check time within salon working hours
+    // Check salon working hours
     if (selectedSalon) {
-      const [startHour, startMinute] = selectedSalon.startT.split(":").map(Number);
-      const [endHour, endMinute] = selectedSalon.endT.split(":").map(Number);
-
-      const startTotal = startHour * 60 + startMinute;
-      const endTotal = endHour * 60 + endMinute;
+      const [startHour, startMin] = selectedSalon.startT.split(":").map(Number);
+      const [endHour, endMin] = selectedSalon.endT.split(":").map(Number);
+      const startTotal = startHour * 60 + startMin;
+      const endTotal = endHour * 60 + endMin;
       const selectedTotal = selected.getHours() * 60 + selected.getMinutes();
-
       if (selectedTotal < startTotal || selectedTotal > endTotal) {
-        alert(`Please choose a time between ${selectedSalon.startT} and ${selectedSalon.endT}`);
-        return;
+        return alert(`Choose a time between ${selectedSalon.startT} - ${selectedSalon.endT}`);
       }
     }
 
     try {
-      const serviceObj = selectedSalon.services_list.find(
-        (s) => s.service_name === selectedService
+      await axiosInstance.post(
+        "/bookings/",
+        {
+          salon_id: selectedSalon.id,
+          service_id: selectedServiceId,
+          date_time: new Date(dateTime).toISOString(),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Send POST request to backend
-      await axiosInstance.post("/bookings/", {
-        salon_id: selectedSalon.id,
-        service_name: selectedService,
-        date_time: dateTime,
-        price: serviceObj?.price || 0,
-       
-      },
-      {
-         headers: {
-          Authorization: `Bearer ${token}`,
-      }
-    }
-      
-    );
-
-      alert(
-      `Booking confirmed for ${selectedService} at ${selectedSalon?.salon_name} on ${selected.toLocaleString()}`
-    );
-
-      navigate("/dashboard"); 
+      const serviceObj = selectedSalon.services_list.find(s => s.id === parseInt(selectedServiceId));
+      alert(`Booking confirmed for ${serviceObj.service_name} at ${selectedSalon.salon_name} on ${selected.toLocaleString()}`);
+      navigate("/dashboard");
     } catch (err) {
       console.error("Booking error:", err.response?.data || err.message);
       alert("Failed to save booking.");
@@ -75,63 +54,49 @@ const BookService = () => {
   };
 
   return (
-    <>
     <div className="Background">
       <div className="bookservice">
         <h2>Book at {selectedSalon?.salon_name}</h2>
         <p>Location: {selectedSalon?.location}</p>
         <p>Working hours: {selectedSalon?.startT} - {selectedSalon?.endT}</p>
 
-       <label> Choose Time and date
-        <button onClick={() => setShowPicker(!showPicker)}>
-          Select Date & Time
-        </button>
+        <label>
+          Choose Date & Time
+          <button onClick={() => setShowPicker(!showPicker)}>Select</button>
         </label>
-
         {showPicker && (
-          <input
-            type="datetime-local"
-            value={dateTime}
-            onChange={(e) => setDateTime(e.target.value)}
-            min={new Date().toISOString().slice(0,16)}
-          />
+          <input type="datetime-local" value={dateTime} onChange={(e) => setDateTime(e.target.value)} min={new Date().toISOString().slice(0,16)} />
         )}
 
-       
-       <div className="ServiceChoose">
-       <label>Choose service
-        {selectedSalon && (
-          
-            
-            <select
-              value={selectedService}
-              onChange={(e) => setSelectedService(e.target.value)}
-            >
-              <option value="">Choose service</option>
-              {selectedSalon?.services_list?.map((service, index) => (
-                <option key={index} value={service.service_name}>
-                  {service.service_name} - R{service.price}
-                </option>
-              ))}
-            </select>
-        )}</label>
-          </div>
-        
+        <div className="ServiceChoose">
 
-        {selectedService && (
+          <label>
+            Choose Service
+            {selectedSalon && (
+
+              <select value={selectedServiceId} onChange={(e) => setSelectedServiceId(e.target.value)}>
+                <option value="">Choose service</option>
+                {selectedSalon.services_list?.map(service => (
+                  <option key={service.id} value={service.id}>
+                    {service.service_name} - R{service.price}
+                  </option>
+                ))}
+              </select>
+            )}
+          </label>
+        </div>
+
+        {selectedServiceId && (
           <p>
-            You want your <strong>{selectedService}</strong> at{" "}
-            <strong>{selectedSalon?.salon_name}</strong> on{" "}
-            <strong>{new Date(dateTime).toLocaleString()}</strong>
+            You want your <strong>{selectedSalon.services_list.find(s => s.id === parseInt(selectedServiceId))?.service_name}</strong> at <strong>{selectedSalon.salon_name}</strong> on <strong>{new Date(dateTime).toLocaleString()}</strong>
           </p>
         )}
+
+        <div className="Confirm">
+          <button onClick={handleConfirm}>Confirm Booking</button>
+        </div>
       </div>
-      
-      <div className="Confirm">
-      <button onClick={handleConfirm}>Confirm Booking</button>
-      </div>
-      </div>
-    </>
+    </div>
   );
 };
 

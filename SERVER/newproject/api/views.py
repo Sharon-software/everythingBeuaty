@@ -86,7 +86,11 @@ class BookingViewSet(viewsets.ModelViewSet):
         else:
             
             return Booking.objects.filter(customer_email=user.email).order_by('-date_time')
-
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
     
     def perform_create(self, serializer):
       serializer.save()
@@ -193,10 +197,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                 {"detail": "You are not authorized to modify this booking."},
                 status=status.HTTP_403_FORBIDDEN
                 )
-
-
-        
-
 User = get_user_model()
 
 

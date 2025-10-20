@@ -434,6 +434,7 @@ margin-left:40%;
   }
 }
 
+
 .salondisplay button{
   margin: 10px;
   font-size: 1rem;
@@ -528,6 +529,37 @@ color:rgb(59, 5, 46);
   margin:0.5rem;
   background-color: #96098f;
   color:#ccc;
+}
+.decline button{
+
+background-color: #ecc2ea;
+color:purple;
+margin-right:1rem;
+}
+
+.decline button:hover{
+  background-color: #d3a5d1;
+}
+.DeclineModal{
+  max-width: 400px;
+  margin: 3rem auto;
+  padding: 2rem; 
+  background-color:plum;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  animation: popIn 0.5s ease forwards;
+  transform-origin: center;
+}
+.DeclineModal p{
+  color:#96098f;
+}
+.DeclineModal label{
+  display:flex;
+  margin-bottom:0.5rem;
+}
+.completeStatus button{
+  border-radius: 6px;
+
 }
 
 
@@ -681,4 +713,11 @@ color:rgb(59, 5, 46);
     flex-wrap: wrap;
     justify-content: center;
   }
+}
+.UserSalonInfo p {
+  font-size:1.2rem;
+  color:rgb(176, 187, 177);
+  display: flex;
+  flex-direction: column;
+  
 }

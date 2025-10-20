@@ -32,6 +32,15 @@ const Regsalon = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
      setErrors({});
+
+      const invalidPrices = services.filter(
+    (s) => s.price && /[^0-9.]/.test(s.price)
+   );
+    if (invalidPrices.length > 0) {
+      setErrors({ price: "Prices must be numeric vulaues." });
+      return;
+    }
+
     const token = localStorage.getItem("accessToken");
     if (!token) {
       console.error("No token found. Please login first.");
@@ -68,6 +77,7 @@ const Regsalon = () => {
       console.log("Salon registered", response.data);
       setErrors({});
       setSuccess(true);
+      alert("Salon registered successfully!");
       navigate('/Dashboard');
     } catch (err) {
       console.error("Registration error", err.response?.data);
@@ -152,7 +162,7 @@ const Regsalon = () => {
               onChange={(e) => handleServiceChange(index, "price", e.target.value)}
             />
              
-
+            {error.price && <div style={{ color: "red" }}>{error.price}</div>}
             <button style={{
               
               marginBottom:"1rem",
@@ -161,6 +171,7 @@ const Regsalon = () => {
           </div>
         ))}
         <button type="button" onClick={addService}>Add Service</button><br/><br/>
+        
 
         <button type="submit">Submit</button>
 

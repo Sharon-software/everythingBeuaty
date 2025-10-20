@@ -32,20 +32,30 @@ class BookingSerializer(serializers.ModelSerializer):
     price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     customer_name = serializers.CharField(read_only=True)
     customer_email = serializers.CharField(read_only=True)
-    status = serializers.CharField(read_only=True)
-
+    status = serializers.CharField(required=False)
+    decline_reason = serializers.CharField(allow_blank=True, allow_null=True, required=False) 
+    rating= serializers.IntegerField(required=False, allow_null=True)
+    review= serializers.CharField(required=False, allow_null=True)
+    
     class Meta:
         model = Booking
         fields = [
             'id', 'salon_id', 'salon_name', 'service_id', 'service_name_display',
-            'date_time', 'price', 'customer_name', 'customer_email', 'status'
+            'date_time', 'price', 'customer_name', 'customer_email', 'status','decline_reason','rating','review'
         ]
-        read_only_fields = ['status', 'price', 'customer_name', 'customer_email']
+        read_only_fields = ['price', 'customer_name', 'customer_email']
+    
+    def validate(self, attrs):
+        if attrs.get('status') == 'declined' and not attrs.get('decline_reason'):
+            raise serializers.ValidationError({
+                "decline_reason": "Please provide a reason when declining a booking."
+            })
+        return attrs
 
     def create(self, validated_data):
         request = self.context.get('request')
         user = request.user 
-
+     
         if not user or not user.is_authenticated:
             raise serializers.ValidationError("Authentication required.")
 
@@ -69,6 +79,5 @@ class BookingSerializer(serializers.ModelSerializer):
         validated_data['customer_email'] = user.email
         validated_data['status'] = 'pending'
         
-        print(validated_data)
 
         return Booking.objects.create(**validated_data)

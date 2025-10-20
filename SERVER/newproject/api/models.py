@@ -62,7 +62,11 @@ class Booking(models.Model):
         ('pending', 'Pending'),
         ('approved', 'Approved'),
         ('declined', 'Declined'),
+        ('completed', 'Completed'),
+        ('incomplete', 'Incomplete'),
+        ('cancelled', 'Cancelled'),
     ]
+
 
     salon = models.ForeignKey('Salon', on_delete=models.CASCADE)
     service =  models.ForeignKey('Services', on_delete=models.CASCADE)
@@ -71,6 +75,9 @@ class Booking(models.Model):
     customer_name = models.CharField(max_length=255)
     customer_email = models.EmailField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    decline_reason = models.TextField(blank=True, null=True)
+    rating= models.IntegerField(blank=True, null=True)
+    review= models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.customer_name} - {self.salon.salon_name} - {self.status}"

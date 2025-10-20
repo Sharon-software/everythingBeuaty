@@ -45,7 +45,7 @@ const BookService = () => {
       );
 
       const serviceObj = selectedSalon.services_list.find(s => s.id === parseInt(selectedServiceId));
-      alert(`Booking confirmed for ${serviceObj.service_name} at ${selectedSalon.salon_name} on ${selected.toLocaleString()}`);
+      alert(`Booking confirmed for ${serviceObj.service_name} at ${selectedSalon.salon_name} on ${selected.toLocaleString()} you will receive an email once the salon confirms your booking.`);
       navigate("/dashboard");
     } catch (err) {
       console.error("Booking error:", err.response?.data || err.message);

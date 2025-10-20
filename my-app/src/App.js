@@ -20,6 +20,7 @@ import Book from  './pages/dashboard/Book';
 import Regsalon from './pages/dashboard/Regsalon';
 import BookService from './pages/dashboard/BookService';
 import ViewMore from './pages/dashboard/ViewMore';
+import DeclineModal from './pages/dashboard/DeclineModal';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
         <Route path="/Regsalon" element={<PrivateRoute><Regsalon /></PrivateRoute>}></Route>
         <Route path="/BookService" element={<PrivateRoute><BookService /></PrivateRoute>}></Route>
         <Route path ="/ViewMore" element={<ViewMore />}></Route>
+        <Route path="/decline/:bookingId" element={<DeclineModal />} />
         
         <Route path="/bookings" element={<Bookings/> } />
 

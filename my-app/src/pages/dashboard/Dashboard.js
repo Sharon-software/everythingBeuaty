@@ -1,27 +1,32 @@
-import { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import AxiosInstance from '../../Axiosinstance';
-import { AuthProvider } from '../../AuthContext';
-import axiosInstance from '../../Axiosinstance';
+import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import AxiosInstance from "../../Axiosinstance";
+import { AuthProvider } from "../../AuthContext";
+import axiosInstance from "../../Axiosinstance";
+import DeclineModal from "../dashboard/DeclineModal";
 
 const Dashboard = () => {
   const [firstname, setFirstname] = useState("");
   const [email, setEmail] = useState("");
   const { isLoggedIn } = useContext(AuthProvider);
   const navigate = useNavigate();
+
   const [salons, setSalons] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [bookings, setBookings] = useState([]);
+
   const [editingBooking, setEditingBooking] = useState(null);
   const [editData, setEditData] = useState({ service_name: "", date_time: "" });
   const [showMyBookings, setShowMyBookings] = useState(false);
   const [showCustomerBookings, setShowCustomerBookings] = useState(false);
+  const [declineBookingId, setDeclineBookingId] = useState(null);
 
+  // Fetch user info
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await AxiosInstance.get('/details/');
+        const response = await AxiosInstance.get("/details/");
         setFirstname(response.data.first_name || "");
         setEmail(response.data.email || "");
       } catch (err) {
@@ -31,6 +36,7 @@ const Dashboard = () => {
     fetchUser();
   }, []);
 
+  // Fetch salons
   useEffect(() => {
     const fetchSalons = async () => {
       try {
@@ -47,87 +53,90 @@ const Dashboard = () => {
     if (email) fetchSalons();
   }, [email]);
 
+  // Fetch bookings
+  const fetchBookings = async () => {
+    try {
+      const res = await axiosInstance.get("/bookings/");
+      setBookings(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-   const fetchBookings = async () => {
-      try {
-        const res = await axiosInstance.get("/bookings/");
-        setBookings(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
   useEffect(() => {
-   
     if (email) fetchBookings();
   }, [email]);
+
+  // Approve booking
+  const handleApprove = async (bookingId) => {
+    try {
+      await axiosInstance.patch(`/bookings/${bookingId}/`, { status: "approved" });
+      fetchBookings();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Cancel booking
+  const handleCancel = async (bookingId) => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+    try {
+      await axiosInstance.patch(`/bookings/${bookingId}/`, { status: "cancelled" });
+      fetchBookings();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to cancel booking. Try again later.");
+    }
+  };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  
-  const userSalons = salons.filter(salon => salon.owner === email);
+  //sort bookings by date
+  const userSalons = salons.filter((salon) => salon.owner === email);
   const myBookings = bookings
-    .filter(b => b.customer_email === email)
+    .filter((b) => b.customer_email === email)
     .sort((a, b) => new Date(a.date_time) - new Date(b.date_time));
   const salonCustomerBookings = bookings
-    .filter(b => userSalons.some(salon => salon.salon_name === b.salon_name))
+    .filter((b) => userSalons.some((salon) => salon.salon_name === b.salon_name))
     .sort((a, b) => new Date(a.date_time) - new Date(b.date_time));
 
-  
-  const handleApprove = async (bookingId) => {
+    // Mark a booking as completed
+const handleComplete = async (bookingId) => {
   try {
-    await axiosInstance.patch(`/bookings/${bookingId}/`, { status: 'approved' });
-    fetchBookings();
+    await axiosInstance.patch(`/bookings/${bookingId}/`, { status: "completed" });
+    await fetchBookings(); // refresh list
+    alert("Service marked as completed!");
   } catch (err) {
     console.error(err);
+    alert("Failed to complete service. Please try again.");
   }
 };
 
-const handleDecline = async (bookingId) => {
+// Mark a booking as incomplete
+const handleIncomplete = async (bookingId) => {
   try {
-     await axiosInstance.patch(`/bookings/${bookingId}/`, { status: 'declined' });
-    fetchBookings();
+    await axiosInstance.patch(`/bookings/${bookingId}/`, { status: "incomplete" });
+    await fetchBookings(); // refresh list
+    alert("Service marked as incomplete.");
   } catch (err) {
     console.error(err);
+    alert("Failed to mark as incomplete. Please try again.");
   }
 };
 
-//cancelling booking
-const handleCancel = async (bookingId) => {
-  if (!window.confirm("Are you sure you want to cancel this booking?")) return;
-  try {
-    await axiosInstance.patch(`/bookings/${bookingId}/`, { status: 'cancelled' });
-    fetchBookings(); 
-  } catch (err) {
-    console.error(err);
-    alert("Failed to cancel booking. Try again later.");
-  }
-};
+// count booking by status
+const bookingSummary = salonCustomerBookings.reduce((acc, b) => {
+  acc[b.status] = (acc[b.status] || 0) + 1;
+  return acc;
+}, {});
 
-//handler to open edit mode
-const handleEdit = (booking) => {
-  setEditingBooking(booking.id);
-  setEditData({
-    service_name: booking.service_name,
-    date_time: booking.date_time.split(".")[0], // format safely for datetime-local
-  });
-};
-//handle to save edit
-const handleSaveEdit = async () => {
-  try {
-    await axiosInstance.patch(`/bookings/${editingBooking}/`, {
-      service_name: editData.service_name,
-      date_time: editData.date_time,
-      status: 'pending', // reset status so owner can approve again
-    });
-    setEditingBooking(null);
-    fetchBookings();
-  } catch (err) {
-    console.error(err);
-    alert("Failed to update booking.");
-  }
-};
-
+// Approved bookings today
+const today = new Date().toISOString().split("T")[0]; 
+const approvedToday = salonCustomerBookings.some(b => {
+  const bookingDate = b.date_time.split("T")[0];
+  return b.status === "approved" && bookingDate === today;
+});
 
 
   return (
@@ -136,25 +145,42 @@ const handleSaveEdit = async () => {
 
       {userSalons.length > 0 && (
         <div className="UserSalonInfo">
-          <h4 style={{
-            fontSize: "1.5rem",
-            color:'#b2c0b2ff',
-            fontWeight:'bold',
-            textAlign:'center'
-          }}>
+          <h4
+            style={{
+              fontSize: "1.5rem",
+              color: "#b2c0b2ff",
+              fontWeight: "bold",
+              textAlign: "center",
+            }}
+          >
             You have {userSalons.length} salon(s) registered.
           </h4>
-          <p style={{
-            fontSize: "1.2rem",
-            color:'#b2c0b2ff',
-            fontWeight:'bold',
-          }}>You also have {salonCustomerBookings.length} customer booking(s) waiting.</p>
+
+         
+    <p> 
+     
+    Booking summary:
+    <span style={{color:"orange"}}> Approved: {bookingSummary.approved || 0}</span>
+    <span style={{color:"orange"}}> Pending: {bookingSummary.pending || 0}</span>
+    <span> Completed: {bookingSummary.completed || 0}</span>
+    <span> Incomplete: {bookingSummary.incomplete || 0}</span>
+    <span> Cancelled: {bookingSummary.cancelled || 0}</span>
+    <span> Declined: {bookingSummary.declined || 0}</span>
+  </p>
+  {approvedToday && (
+    <p style={{fontSize: "1.2rem",
+        color: "#ff6347",
+        fontWeight: "bold",}}>
+
+         Reminder: You have an approved booking today! 
+        </p>
+       
+      )}
         </div>
       )}
+      
 
-     
       <div style={{ marginBottom: "12px" }}>
-        
         <button
           onClick={() => setShowMyBookings(!showMyBookings)}
           style={{
@@ -170,7 +196,6 @@ const handleSaveEdit = async () => {
           {showMyBookings ? "Hide My Bookings" : "Show My Bookings"}
         </button>
 
-        
         {userSalons.length > 0 && (
           <button
             onClick={() => setShowCustomerBookings(!showCustomerBookings)}
@@ -183,108 +208,60 @@ const handleSaveEdit = async () => {
               color: "purple",
             }}
           >
-            {showCustomerBookings ? "Hide Customer Bookings" : "Show Customer Bookings"}
+            {showCustomerBookings
+              ? "Hide Customer Bookings"
+              : "Show Customer Bookings"}
           </button>
         )}
       </div>
 
-     
+      {/* MY BOOKINGS */}
       {showMyBookings && (
         <div className="booking-list">
-          {myBookings.length === 0 ? (
-            <p>You have no upcoming bookings.</p>
+
+           {myBookings.filter(b => b.status === "pending" || b.status === "approved").length === 0 ? (
+            <p>You have no upcoming booking, make your booking below for your next appointment.</p>
           ) : (
-            myBookings.map((b, i) => (
-              <div key={i} className="book-card" style={{
-                backgroundColor: "rgb(235, 147, 213)",
-                borderRadius: "10px",
-                width: "30%",
-                padding: "15px",
-                marginBottom: "10px"
-              }}>
+          myBookings
+            .filter(b => b.status === "pending" || b.status === "approved")
+            .map((b, i) => (
+              <div
+                key={i}
+                className="book-card"
+                style={{
+                  backgroundColor: "rgb(235, 147, 213)",
+                  borderRadius: "10px",
+                  width: "30%",
+                  padding: "15px",
+                  marginBottom: "10px",
+                }}
+              >
                 <p><strong>Salon:</strong> {b.salon_name}</p>
                 <p><strong>Service:</strong> {b.service_name}</p>
                 <p><strong>Date:</strong> {new Date(b.date_time).toLocaleString()}</p>
                 <p><strong>Price:</strong> R{b.price}</p>
-               <p>
-                <strong>Status:</strong>{" "}
-                <span style={{
-                color: b.status === "approved" ? "green" : b.status === "declined" ? "red" : "purple",
-                fontWeight: "bold"
-               }}>
-               {b.status ? b.status.charAt(0).toUpperCase() + b.status.slice(1) : "Pending"}
-               </span>
+                <p>
+                  <strong>Status:</strong>{" "}
+                  <span
+                    style={{
+                      color:
+                        b.status === "approved"
+                          ? "green"
+                          : b.status === "declined"
+                          ? "red"
+                          : "purple",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {b.status
+                      ? b.status.charAt(0).toUpperCase() + b.status.slice(1)
+                      : "Pending"}
+                  </span>
                 </p>
 
-  <div className="Customer">
-  <button onClick={() => handleCancel(b.id)}>Cancel</button> 
-  
-  {editingBooking === b.id ? (
-    <div style={{ marginTop: "10px" }}>
-      <input
-        type="text"
-        placeholder="Service Name"
-        value={editData.service_name}
-        onChange={(e) => setEditData({ ...editData, service_name: e.target.value })}
-      />
-      <input
-        type="datetime-local"
-        value={editData.date_time}
-        onChange={(e) => setEditData({ ...editData, date_time: e.target.value })}
-      />
-      <button onClick={handleSaveEdit}>Save</button>
-      <button onClick={() => setEditingBooking(null)}>Cancel Edit</button>
-    </div>
-  ) : (
-    <button onClick={() => handleEdit(b)}>Edit</button>
-  )}
-</div>
+                <div className="Customer">
+                  <button onClick={() => handleCancel(b.id)}>Cancel</button>
 
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {showCustomerBookings && (
-        <div className="booking-list">
-          {salonCustomerBookings.length === 0 ? (
-            <p>No customer bookings yet.</p>
-          ) : (
-            salonCustomerBookings.map((b, i) => (
-              <div key={i} className="book-card" style={{
-                backgroundColor: "rgb(235, 147, 213)",
-                borderRadius: "10px",
-                width: "30%",
-                padding: "15px",
-                marginBottom: "10px"
-              }}>
-                <p><strong>Salon:</strong> {b.salon_name}</p>
-                <p><strong>Service:</strong> {b.service_name}</p>
-                <p><strong>Date:</strong> {new Date(b.date_time).toLocaleString()}</p>
-                <p><strong>Price:</strong> R{b.price}</p>
-                <p><strong>Customer Name:</strong> {b.customer_name}</p>
-                <p><strong>Customer Email:</strong> {b.customer_email}</p>
-                <p>
-                <strong>Status:</strong>{" "}
-                <span style={{
-                color: b.status === "approved" ? "green" : b.status === "declined" ? "red" : "purple",
-                fontWeight: "bold"
-                 }}>
-                  {b.status ? b.status.charAt(0).toUpperCase() + b.status.slice(1) : "Pending"}
-                </span>
-                 </p>
-
-                
-
-                <div  className='BookingApproval'>
-                {b.status === 'pending' && (
-                 <>
-                 <button onClick={() => handleApprove(b.id)}>Accept</button>
-                 <button onClick={() => handleDecline(b.id)}>Decline</button>
-                 </>
-                 )}
-                
                 </div>
               </div>
             ))
@@ -292,10 +269,102 @@ const handleSaveEdit = async () => {
         </div>
       )}
 
+      {/* CUSTOMER BOOKINGS */}
+      {showCustomerBookings && (
+        <div className="booking-list">
+          {salonCustomerBookings.filter(b => b.status === "pending" || b.status === "approved").length === 0 ? (
+            <p>No customer bookings yet.</p>
+          ) : (
+            salonCustomerBookings
+              .filter(b => b.status === "pending" || b.status === "approved")
+              .map((b, i) => (
+              <div
+                key={i}
+                className="book-card"
+                style={{
+                  backgroundColor: "rgb(235, 147, 213)",
+                  borderRadius: "10px",
+                  width: "30%",
+                  padding: "15px",
+                  marginBottom: "10px",
+                }}
+              >
+                <p><strong>Salon:</strong> {b.salon_name}</p>
+                <p><strong>Service:</strong> {b.service_name}</p>
+                <p><strong>Date:</strong> {new Date(b.date_time).toLocaleString()}</p>
+                <p><strong>Price:</strong> R{b.price}</p>
+                <p><strong>Customer Name:</strong> {b.customer_name}</p>
+                <p><strong>Customer Email:</strong> {b.customer_email}</p>
+                <p>
+                  <strong>Status:</strong>{" "}
+                  <span
+                    style={{
+                      color:
+                        b.status === "approved"
+                          ? "green"
+                          : b.status === "declined"
+                          ? "red"
+                          : "purple",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {b.status
+                      ? b.status.charAt(0).toUpperCase() + b.status.slice(1)
+                      : "Pending"}
+                  </span>
+                </p>
+
+                <div className="BookingApproval">
+                  {b.status === "pending" && (
+                    <>
+                      <button onClick={() => handleApprove(b.id)}>Accept</button>
+                      <button onClick={() => navigate(`/decline/${b.id}`)}>Decline</button>
+                    </>
+                  )}
+                </div>
+
+  {/* Show "Complete" and "Incomplete" buttons only if the date/time has passed and booking is approved */}
+{b.status === "approved" && new Date(b.date_time) < new Date() && (
+  
+  <div className="completeStatus">
+    <button
+      onClick={() => handleComplete(b.id)}
+      style={{
+        backgroundColor: "#4caf50",
+        color: "white",
+        border: "none",
+        cursor: "pointer"
+      }}
+    >
+      Complete Service
+    </button>
+
+    <button
+      onClick={() => handleIncomplete(b.id)}
+      style={{
+        backgroundColor: "#f44336",
+        color: "white",
+        border: "none",
+        cursor: "pointer"
+      }}
+    >
+      Incomplete Service
+    </button>
+  </div>
+)}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+     
+
       <h3>
         <label onClick={() => navigate("/RegSalon")}>REGISTER</label> your salon
         <br /> OR <br />
-        <label onClick={() => navigate("/Book")}>BOOK</label> your next appointment
+        <label onClick={() => navigate("/Book")}>BOOK</label> your next
+        appointment
       </h3>
     </div>
   );

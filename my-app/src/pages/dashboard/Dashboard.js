@@ -4,6 +4,7 @@ import AxiosInstance from "../../Axiosinstance";
 import { AuthProvider } from "../../AuthContext";
 import axiosInstance from "../../Axiosinstance";
 import DeclineModal from "../dashboard/DeclineModal";
+import RatingForm from "./RatingForm";
 
 const Dashboard = () => {
   const [firstname, setFirstname] = useState("");
@@ -21,6 +22,7 @@ const Dashboard = () => {
   const [showMyBookings, setShowMyBookings] = useState(false);
   const [showCustomerBookings, setShowCustomerBookings] = useState(false);
   const [declineBookingId, setDeclineBookingId] = useState(null);
+  const [showRatingForm, setShowRatingForm] = useState(null);
 
   // Fetch user info
   useEffect(() => {
@@ -169,7 +171,7 @@ const approvedToday = salonCustomerBookings.some(b => {
   </p>
   {approvedToday && (
     <p style={{fontSize: "1.2rem",
-        color: "#ff6347",
+        color: "#84da72ff",
         fontWeight: "bold",}}>
 
          Reminder: You have an approved booking today! 
@@ -219,11 +221,11 @@ const approvedToday = salonCustomerBookings.some(b => {
       {showMyBookings && (
         <div className="booking-list">
 
-           {myBookings.filter(b => b.status === "pending" || b.status === "approved").length === 0 ? (
+           {myBookings.filter(b => b.status === "pending" || b.status === "approved"||(b.status === "completed" && !b.rating)).length === 0 ? (
             <p>You have no upcoming booking, make your booking below for your next appointment.</p>
           ) : (
           myBookings
-            .filter(b => b.status === "pending" || b.status === "approved")
+            .filter(b => b.status === "pending" || b.status === "approved"||(b.status === "completed" && !b.rating))
             .map((b, i) => (
               <div
                 key={i}
@@ -263,6 +265,91 @@ const approvedToday = salonCustomerBookings.some(b => {
                   <button onClick={() => handleCancel(b.id)}>Cancel</button>
 
                 </div>
+                {b.status === "completed" && (
+  <>
+    {!b.rating ? (
+      <>
+        <button
+          onClick={() => setShowRatingForm(b.id)}
+          style={{
+            marginTop: "8px",
+            padding: "6px 12px",
+            border: "none",
+            borderRadius: "5px",
+            backgroundColor: "#e9a21eff",
+            color: "black",
+            cursor: "pointer",
+          }}
+        >
+          Rate Service
+        </button>
+
+        {/* Modal popup for rating */}
+        {showRatingForm === b.id && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                background: "#fff",
+                padding: "20px",
+                borderRadius: "10px",
+                width: "400px",
+                maxWidth: "90%",
+              }}
+            >
+              <button
+                onClick={() => setShowRatingForm(null)}
+                style={{
+                  position: "absolute",
+                  top: "5px",
+                  right: "10px",
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "18px",
+                  cursor: "pointer",
+                }}
+              >
+                ✖
+              </button>
+              <RatingForm
+                bookingId={b.id}
+                onClose={() => {
+                  setShowRatingForm(null);
+                  fetchBookings(); // refresh after submitting rating
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </>
+    ) : (
+      <>
+        <p>
+          <strong>Your Rating:</strong> {b.rating} ⭐
+        </p>
+        {b.review && (
+          <p>
+            <strong>Your Review:</strong> {b.review}
+          </p>
+        )}
+      </>
+    )}
+  </>
+)}
+
               </div>
             ))
           )}

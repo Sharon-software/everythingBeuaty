@@ -14,6 +14,7 @@ from .models import Salon, Booking, Services, UserProfile, PendingUser
 from .serializers import SalonSerializer, BookingSerializer
 from django.conf import settings
 from rest_framework import status
+from django.utils.crypto import get_random_string
 
 
 class ProtectedView(APIView):
@@ -356,3 +357,36 @@ def verify_code(request):
     pending.delete()
 
     return Response({"success": True, "message": "Account verified"})
+
+@api_view(['POST'])
+def forgot_password(request):
+    email = request.data.get("email")
+
+    if not email:
+        return Response({"success": False, "message": "Email is required"}, status=400)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"success": False, "message": "User with this email does not exist"}, status=404)
+    
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    reset_token = get_random_string(length=32)
+    profile.reset_token = reset_token
+    profile.save()
+    
+    reset_link = f"http://localhost:3000/reset-password/{reset_token}"
+    
+    try:
+        send_mail(
+            subject="Password Reset Code",
+            message=f"Hi {user.username},\n\nClick the link below to reset your password:\n{reset_link}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        print("Email send failed:", e)
+        return Response({"success": False, "message": "Failed to send email"}, status=500)
+
+    return Response({"success": True, "message": "Password reset code sent to your email"})

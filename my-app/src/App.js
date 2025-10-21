@@ -21,6 +21,7 @@ import Regsalon from './pages/dashboard/Regsalon';
 import BookService from './pages/dashboard/BookService';
 import ViewMore from './pages/dashboard/ViewMore';
 import DeclineModal from './pages/dashboard/DeclineModal';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         
         <Route path="/Dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>}/>
         <Route path="/login" element={<Login />}></Route>
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/Book" element={<PrivateRoute><Book /></PrivateRoute>}></Route>
         <Route path="/Regsalon" element={<PrivateRoute><Regsalon /></PrivateRoute>}></Route>
         <Route path="/BookService" element={<PrivateRoute><BookService /></PrivateRoute>}></Route>

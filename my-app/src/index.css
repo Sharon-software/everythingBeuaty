@@ -721,3 +721,46 @@ margin-right:1rem;
   flex-direction: column;
   
 }
+.forgotPassword label{
+  text-decoration: underline;
+  cursor: pointer;
+  color:black;
+}
+.forgotPassword label:hover{
+  color:blue;
+}
+
+.forgot{
+  max-width: 400px;
+  margin: 3rem auto;
+  padding: 2rem;
+  
+  background-color:plum;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  animation: popIn 0.5s ease forwards;
+  transform-origin: center;
+}
+.forgot input {
+  margin-top:1rem ;
+  display: block;
+  width: 100%;
+  padding: 0.7rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+.forgot input[type="submit"] {
+  background-color:purple;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 20px;
+  transition: background-color 0.3s ease;
+}
+.forgot h2{
+  text-align: center;
+  color:rgb(99, 5, 75);
+  font-size:2rem;
+}

@@ -10,6 +10,7 @@ import axios from 'axios';
 import { AuthProvider } from '../AuthContext';
 
 
+
 const Navbar = () => {
   const styles = { color: "orange" };
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ const Navbar = () => {
         </form>
 
         <div className="forgotPassword">
-          <label> Forgot Password</label>
+          <label onClick={() => navigate("/forgot-password")}> Forgot Password</label>
         </div>
         
 

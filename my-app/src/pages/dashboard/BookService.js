@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axiosInstance from "../../Axiosinstance";
+import LoadingButton from "../Loading";
 
 const BookService = () => {
   const [showPicker, setShowPicker] = useState(false);
@@ -93,7 +94,7 @@ const BookService = () => {
         )}
 
         <div className="Confirm">
-          <button onClick={handleConfirm}>Confirm Booking</button>
+          <LoadingButton onClick={handleConfirm}>Confirm Booking</LoadingButton>
         </div>
       </div>
     </div>

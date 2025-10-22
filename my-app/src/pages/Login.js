@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthProvider } from "../AuthContext";
+import LoadingButton from "./Loading";
 
 const Login = () => {
 
@@ -49,7 +50,7 @@ const Login = () => {
         
         {error && <div className="text-danger"> {error} </div>}
 
-          <input type="submit" /> <br />
+          <LoadingButton type="submit" /> <br />
         </form>
         
 

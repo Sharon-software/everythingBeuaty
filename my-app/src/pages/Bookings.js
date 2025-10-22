@@ -1,6 +1,7 @@
 import React from 'react'
 import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import LoadingButton from './Loading';
 
 const Bookings = () => {
  const [salons, setSalons] = useState([]);
@@ -8,6 +9,7 @@ const Bookings = () => {
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/v1/salons/")
@@ -28,11 +30,39 @@ const Bookings = () => {
   if (loading) return <p>Loading salons...</p>;
   if (error) return <p>Error: {error}</p>;
 
+  const filteredSalons = salons.filter((salon) => {
+  const query = searchQuery.toLowerCase();
+  return (
+    salon.salon_name.toLowerCase().includes(query) ||
+    salon.location.toLowerCase().includes(query) ||
+    salon.services?.some(s =>
+      s.service_name.toLowerCase().includes(query)
+    )
+  );
+});
+
   return (
     <>
+     <input
+        type="text"
+        placeholder="Search by service, salon name, or location..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        style={{
+          width: "80%",
+          padding: "8px",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+          marginBottom: "12px",
+        }}
+      />
     <div className="salondisplay">
-      {salons.map((salon, index) => (
-      <div key={index} className="salon-card">
+      {filteredSalons.length === 0 ? (
+          <p>No salons found.</p>
+        ) : (
+          filteredSalons.map((salon, index) => (
+            <div key={salon.id || index} className="salon-card">
+
       <div className="contain">
         <h2>{salon.salon_name}</h2>
         <p>Location: {salon.location}</p>
@@ -67,14 +97,15 @@ const Bookings = () => {
         <div className='booknow'>
 
         
-       <button onClick ={()=> navigate("/BookService",{state:{salon}})}>Book Now</button> 
-       <button onClick ={()=> navigate("/ViewMore")}>View More</button> 
+       <LoadingButton onClick ={()=> navigate("/BookService",{state:{salon}})}>Book Now</LoadingButton> 
+       <LoadingButton onClick ={()=> navigate("/ViewMore")}>View More</LoadingButton> 
       </div>
 
       </div>
       
       </div>
-     ))}
+     ))
+    )}
 
   
      {selectedImage && (

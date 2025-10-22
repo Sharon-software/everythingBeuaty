@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect,useCallback} from 'react';
 import { useNavigate } from "react-router-dom";
 import axiosInstance from '../../Axiosinstance';
+import axios from 'axios';
+import LoadingButton from '../Loading';
 
 const Regsalon = () => {
   const [salonName, setSalonName] = useState("");
@@ -12,6 +14,8 @@ const Regsalon = () => {
   const [error, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const [suggestions, setSuggestions] = useState([])
+  const [loading, setLoading] = useState(false);
 
   
   const handleServiceChange = (index, field, value) => {
@@ -85,6 +89,54 @@ const Regsalon = () => {
     }
   };
 
+  //wait for 400ms after typying before fetching suggestions 
+   const debounce = (func, delay) => {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => func(...args), delay);
+    };
+  };
+
+ const fetchSuggestions = async (query) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    } 
+  setLoading(true);
+    try {
+      const res = await axios.get("https://nominatim.openstreetmap.org/search", {
+        params: {
+          q: query,
+          format: "json",
+          addressdetails: 1,
+          limit: 7, // show up to 7 suggestions
+          countrycodes: "za", // 🇿🇦 restrict to South Africa
+        },
+      });
+      setSuggestions(res.data || []);
+      setErrors("");
+    } catch (err) {
+      setErrors("Failed to fetch location suggestions");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounced version so it doesn’t call API on every keystroke
+  const debouncedFetch = useCallback(debounce(fetchSuggestions, 400), []);
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setLocation(value);
+    debouncedFetch(value);
+  };
+
+  const handleSelect = (suggestion) => {
+    setLocation(suggestion.display_name);
+    setSuggestions([]); // hide dropdown
+  };
+
   return (
     <div className='salonReg'>
       <form onSubmit={handleSubmit}>
@@ -108,12 +160,53 @@ const Regsalon = () => {
             type="text"
             placeholder="Enter your location"
             value={Location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={handleChange}
             required
-          /><br/>
+          />
         </label>
-         {error.location && <div style={{ color: "red" }}>{error.location}</div>}
+         {loading && (
+        <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "0.25rem" }}>
+          Searching...
+        </div>
+      )}
+      {suggestions.length > 0 && (
+        <ul
+          style={{
+            position: "absolute",
+            background: "white",
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            width: "100%",
+            marginTop: "0.25rem",
+            listStyle: "none",
+            padding: 0,
+            zIndex: 10,
+            maxHeight: "200px",
+            overflowY: "auto",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+          }}
+        >
+          {suggestions.map((s, i) => (
+            <li
+              key={i}
+              onClick={() => handleSelect(s)}
+              style={{
+                padding: "0.6rem",
+                cursor: "pointer",
+                borderBottom: "1px solid #eee",
+              }}
+              onMouseDown={(e) => e.preventDefault()} // prevents blur on click
+            >
+              {s.display_name}
+            </li>
+          ))}
+        </ul>
+      )}
 
+        
+         {error.location && <div style={{ color: "red" }}>{error.location}</div>}
+        <br />
+ 
         <label>
           Working hours start from: 
           <input
@@ -173,7 +266,7 @@ const Regsalon = () => {
         <button type="button" onClick={addService}>Add Service</button><br/><br/>
         
 
-        <button type="submit">Submit</button>
+        <LoadingButton type="submit">Submit</LoadingButton>
 
         {success && (
           <div className="alert alert-success">

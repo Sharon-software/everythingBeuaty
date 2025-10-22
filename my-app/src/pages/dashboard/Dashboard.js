@@ -5,6 +5,7 @@ import { AuthProvider } from "../../AuthContext";
 import axiosInstance from "../../Axiosinstance";
 import DeclineModal from "../dashboard/DeclineModal";
 import RatingForm from "./RatingForm";
+import LoadingButton from "../Loading";
 
 const Dashboard = () => {
   const [firstname, setFirstname] = useState("");
@@ -183,7 +184,7 @@ const approvedToday = salonCustomerBookings.some(b => {
       
 
       <div style={{ marginBottom: "12px" }}>
-        <button
+        <LoadingButton
           onClick={() => setShowMyBookings(!showMyBookings)}
           style={{
             padding: "8px 16px",
@@ -196,10 +197,10 @@ const approvedToday = salonCustomerBookings.some(b => {
           }}
         >
           {showMyBookings ? "Hide My Bookings" : "Show My Bookings"}
-        </button>
+        </LoadingButton>
 
         {userSalons.length > 0 && (
-          <button
+          <LoadingButton
             onClick={() => setShowCustomerBookings(!showCustomerBookings)}
             style={{
               padding: "8px 16px",
@@ -213,7 +214,7 @@ const approvedToday = salonCustomerBookings.some(b => {
             {showCustomerBookings
               ? "Hide Customer Bookings"
               : "Show Customer Bookings"}
-          </button>
+          </LoadingButton>
         )}
       </div>
 
@@ -262,14 +263,14 @@ const approvedToday = salonCustomerBookings.some(b => {
                 </p>
 
                 <div className="Customer">
-                  <button onClick={() => handleCancel(b.id)}>Cancel</button>
+                  <LoadingButton onClick={() => handleCancel(b.id)}>Cancel</LoadingButton>
 
                 </div>
                 {b.status === "completed" && (
   <>
     {!b.rating ? (
       <>
-        <button
+        <LoadingButton
           onClick={() => setShowRatingForm(b.id)}
           style={{
             marginTop: "8px",
@@ -282,7 +283,7 @@ const approvedToday = salonCustomerBookings.some(b => {
           }}
         >
           Rate Service
-        </button>
+        </LoadingButton>
 
         {/* Modal popup for rating */}
         {showRatingForm === b.id && (
@@ -310,7 +311,7 @@ const approvedToday = salonCustomerBookings.some(b => {
                 maxWidth: "90%",
               }}
             >
-              <button
+              <LoadingButton
                 onClick={() => setShowRatingForm(null)}
                 style={{
                   position: "absolute",
@@ -323,7 +324,7 @@ const approvedToday = salonCustomerBookings.some(b => {
                 }}
               >
                 ✖
-              </button>
+              </LoadingButton>
               <RatingForm
                 bookingId={b.id}
                 onClose={() => {
@@ -404,8 +405,8 @@ const approvedToday = salonCustomerBookings.some(b => {
                 <div className="BookingApproval">
                   {b.status === "pending" && (
                     <>
-                      <button onClick={() => handleApprove(b.id)}>Accept</button>
-                      <button onClick={() => navigate(`/decline/${b.id}`)}>Decline</button>
+                      <LoadingButton onClick={() => handleApprove(b.id)}>Accept</LoadingButton>
+                      <LoadingButton onClick={() => navigate(`/decline/${b.id}`)}>Decline</LoadingButton>
                     </>
                   )}
                 </div>
@@ -414,7 +415,7 @@ const approvedToday = salonCustomerBookings.some(b => {
 {b.status === "approved" && new Date(b.date_time) < new Date() && (
   
   <div className="completeStatus">
-    <button
+    <LoadingButton
       onClick={() => handleComplete(b.id)}
       style={{
         backgroundColor: "#4caf50",
@@ -424,9 +425,9 @@ const approvedToday = salonCustomerBookings.some(b => {
       }}
     >
       Complete Service
-    </button>
+    </LoadingButton>
 
-    <button
+    <LoadingButton
       onClick={() => handleIncomplete(b.id)}
       style={{
         backgroundColor: "#f44336",
@@ -436,7 +437,7 @@ const approvedToday = salonCustomerBookings.some(b => {
       }}
     >
       Incomplete Service
-    </button>
+    </LoadingButton>
   </div>
 )}
               </div>

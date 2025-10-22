@@ -1,6 +1,7 @@
 import React from 'react'
 import { useState } from "react";
 import axios from "axios";
+import LoadingButton from './Loading';
 
 
 const ForgotPassword = () => {
@@ -29,7 +30,7 @@ const handleSubmit = async (e) => {
           />
 
         <br />
-        <input type="submit" value="Send Reset Link" />
+        <LoadingButton type="submit" value="Send Reset Link" />
       </form>
     </div>
     

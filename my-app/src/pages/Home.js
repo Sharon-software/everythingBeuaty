@@ -8,6 +8,7 @@ import image5 from '../image/image5.jpeg';
 import brush from '../image/brush.jpg';
 import axios from 'axios';
 import { AuthProvider } from '../AuthContext';
+import LoadingButton from './Loading';
 
 
 
@@ -85,7 +86,7 @@ const Navbar = () => {
         
         {error && <div className="text-danger"> {error} </div>}
 
-          <input type="submit" /> <br />
+          <LoadingButton type="submit" /> <br />
         </form>
 
         <div className="forgotPassword">

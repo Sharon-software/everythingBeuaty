@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import { FaSpinner } from 'react-icons/fa'; 
+import LoadingButton from './Loading';
 
 function getCookie(name) {
   let cookieValue = null;
@@ -31,9 +32,6 @@ const Register = () => {
 
   const navigate = useNavigate();
 
-  // ----------------
-  // HANDLE REGISTER
-  // ----------------
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -121,7 +119,7 @@ const Register = () => {
         <form onSubmit={handleVerify}>
           <input type="text" placeholder="Enter Verification Code" value={code} onChange={(e) => setCode(e.target.value)} />
           {error.code && <small className="text-danger">{error.code}</small>}
-          <input type="submit" value="Verify Account" disabled={loading} />
+          <LoadingButton type="submit" value="Verify Account" disabled={loading} />
         </form>
       )}
     </div>

@@ -15,6 +15,8 @@ from .serializers import SalonSerializer, BookingSerializer
 from django.conf import settings
 from rest_framework import status
 from django.utils.crypto import get_random_string
+from django.db.models import Q
+
 
 
 class ProtectedView(APIView):
@@ -67,10 +69,9 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if Salon.objects.filter(owner=user).exists():
-            return Booking.objects.filter(salon__owner=user).order_by('-date_time')
-        else:
-            return Booking.objects.filter(customer_email=user.email).order_by('-date_time')
+        return Booking.objects.filter(
+              Q(salon__owner=user) | Q(customer_email=user.email)
+        ).order_by('-date_time')
 
     @action(detail=True, methods=['post'])
     def decline(self, request, pk=None):

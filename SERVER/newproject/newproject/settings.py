@@ -13,9 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 from corsheaders.defaults import default_headers
-import os
-import dj_database_url
-from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,12 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-
+SECRET_KEY = SECRET_KEY = 'django-insecure-9zzc)!qgjrkn0p84!!jr2v_l56gcvqjq35mkc$95-u37^v-s!0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -85,9 +83,10 @@ WSGI_APPLICATION = 'newproject.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-      'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')  # Render PostgreSQL URL
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 
@@ -141,7 +140,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     
-]+os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+]
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "Authorization",
@@ -161,16 +160,12 @@ SIMPLE_JWT = {
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://everythingbeauty.onrender.com",
 ]
-SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-for-local')
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
-
     
 CORS_ALLOW_CREDENTIALS = True 
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_HTTPONLY = False
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587

@@ -1,5 +1,5 @@
 set -o errexit
 
-pip install -r SERVER/requirements.txt
-python SERVER/manage.py collectstatic --noinput 
-python SERVER/manage.py migrate
+pip install -r SERVER/newproject/requirements.txt
+python SERVER/newproject/manage.py collectstatic --noinput 
+python SERVER/newproject/manage.py migrate

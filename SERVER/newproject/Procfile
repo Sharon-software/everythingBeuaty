@@ -1,1 +1,1 @@
-web: gunicorn newproject.asgi:application -k uvicorn.workers.UvicornWorker --log-level info --access-logfile - --error-logfile -
+web: gunicorn server.newproject.asgi:application -k uvicorn.workers.UvicornWorker --log-level info --access-logfile - --error-logfile -

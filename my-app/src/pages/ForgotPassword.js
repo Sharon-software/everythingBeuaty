@@ -30,7 +30,9 @@ const handleSubmit = async (e) => {
           />
 
         <br />
-        <LoadingButton type="submit" value="Send Reset Link" />
+        <LoadingButton type="submit" variant="contained">
+                  Send Reset Link
+             </LoadingButton>
       </form>
     </div>
     
